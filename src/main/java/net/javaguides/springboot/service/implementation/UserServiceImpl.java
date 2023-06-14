@@ -3,6 +3,7 @@ package net.javaguides.springboot.service.implementation;
 import lombok.AllArgsConstructor;
 import net.javaguides.springboot.dto.UserDto;
 import net.javaguides.springboot.entity.User;
+import net.javaguides.springboot.exception.ResourceNotFoundException;
 import net.javaguides.springboot.mapper.AutoUserMapper;
 import net.javaguides.springboot.mapper.UserMapper;
 import net.javaguides.springboot.repository.UserRepository;
@@ -29,33 +30,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto createUser(UserDto userDto) {
-        // Convert UserDto into USer JPA Entity
-       //User user = UserMapper.mapToUser(userDto);
-        // ModelMapping
-        //User user = modelMapper.map(userDto, User.class);
 
-        // Using MapStruct
         User user = AutoUserMapper.MAPPER.mapTouser(userDto);
 
         User savedUser = userRepository.save(user);
-         // Convert User JPA entity to UserDto
-        //UserDto saveduserDto = UserMapper.mapToUserDto(savedUser);
-        // ModelMapping
-        //UserDto saveduserDto = modelMapper.map(savedUser, UserDto.class);
-        //MapStruct
-        UserDto saveduserDto = AutoUserMapper.MAPPER.mapToUserDto(savedUser);
-        return saveduserDto;
+
+        return AutoUserMapper.MAPPER.mapToUserDto(savedUser);
     }
 
     @Override
     public UserDto getUserById(Long userId) {
-        Optional<User> optionalUser = userRepository.findById(userId);
-        User user = optionalUser.get();
-        //return UserMapper.mapToUserDto(user);
-        // ModelMapping
-        //return modelMapper.map(user, UserDto.class);
-        // MapStruct
-        return AutoUserMapper.MAPPER.mapToUserDto(optionalUser.get());
+        User user = userRepository.findById(userId).orElseThrow(
+                ()-> new ResourceNotFoundException("User", "id", userId)
+        );
+
+    return AutoUserMapper.MAPPER.mapToUserDto(user);
     }
 
     @Override
@@ -63,35 +52,34 @@ public class UserServiceImpl implements UserService {
         List<User> users = userRepository.findAll();
         List<UserDto> userDtos = new ArrayList<>();
         for(User user: users) {
-            // ModelMapper
-            //UserDto userDto = modelMapper.map(user, UserDto.class);
-            // MapStruct
+
             UserDto userDto = AutoUserMapper.MAPPER.mapToUserDto(user);
             userDtos.add(userDto);
         }
         return userDtos;
-        //return users.stream().map(UserMapper::mapToUserDto).collect(Collectors.toList());
     }
 
     @Override
     public UserDto updateUser(UserDto user) {
-        // get user
-        User existingUser = userRepository.findById(user.getId()).get();
-        // update user
+
+        User existingUser = userRepository.findById(user.getId()).orElseThrow(
+                ()-> new ResourceNotFoundException("User", "id", user.getId())
+        );
+
         existingUser.setFirstName(user.getFirstName());
         existingUser.setLastName(user.getLastName());
         existingUser.setEmail(user.getEmail());
-        // save user
+
         User updatedUser = userRepository.save(existingUser);
-        //return UserMapper.mapToUserDto(updatedUser);
-        // ModelMapper
-        //return modelMapper.map(updatedUser, UserDto.class);
-        // MapStruct
+
         return AutoUserMapper.MAPPER.mapToUserDto(updatedUser);
     }
 
     @Override
     public void deleteUser(Long userId) {
+        User existingUser = userRepository.findById(userId).orElseThrow(
+                ()-> new ResourceNotFoundException("User", "id", userId)
+        );
         userRepository.deleteById(userId);
     }
 }
