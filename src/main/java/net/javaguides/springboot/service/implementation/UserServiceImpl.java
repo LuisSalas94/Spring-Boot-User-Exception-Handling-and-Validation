@@ -3,6 +3,7 @@ package net.javaguides.springboot.service.implementation;
 import lombok.AllArgsConstructor;
 import net.javaguides.springboot.dto.UserDto;
 import net.javaguides.springboot.entity.User;
+import net.javaguides.springboot.exception.EmailAlreadyExistsException;
 import net.javaguides.springboot.exception.ResourceNotFoundException;
 import net.javaguides.springboot.mapper.AutoUserMapper;
 import net.javaguides.springboot.mapper.UserMapper;
@@ -30,6 +31,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto createUser(UserDto userDto) {
+
+       Optional<User> optionalUser = userRepository.findByEmail(userDto.getEmail());
+       if(optionalUser.isPresent()) {
+           throw new EmailAlreadyExistsException("Email already exists, try a new one");
+       }
 
         User user = AutoUserMapper.MAPPER.mapTouser(userDto);
 
